@@ -43,7 +43,7 @@ That generates a `manifest.json` in the configured `outdir` which looks like thi
   "application.js": "application-HP2LS2UH.digested.js",
   "application.css": "application-BWAZLURC.digested.css",
   "images/example.png": "images/example-5N2N2WJM.digested.png",
-  "bootstrap-icons/bootstrap-icons.svg", "_.._/_.._/node_modules/bootstrap-icons/bootstrap-icons-UNS4ZK23.digested.svg"
+  "bootstrap-icons/bootstrap-icons.svg": "_.._/_.._/node_modules/bootstrap-icons/bootstrap-icons-UNS4ZK23.digested.svg"
 }
 ```
 
