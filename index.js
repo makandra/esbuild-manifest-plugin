@@ -35,8 +35,10 @@ function manifestPlugin(options = {}) {
 
         entryPoints.forEach((entrypoint) => {
           const name = entrypoint.replace(/\.js$/, '')
-          const jsRegExp = new RegExp(`^${name}-\\w+\\.digested\\.js$`)
-          const cssRegExp = new RegExp(`^${name}-\\w+\\.digested\\.css$`)
+          const escapedName = name.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')
+
+          const jsRegExp = new RegExp(`^${escapedName}-[^/]+?\\.js$`)
+          const cssRegExp = new RegExp(`^${escapedName}-[^/]+?\\.css$`)
 
           const jsPath = paths.find(path => jsRegExp.test(path))
           const cssPath = paths.find(path => cssRegExp.test(path))
