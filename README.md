@@ -28,8 +28,8 @@ const manifestPlugin = require('esbuild-manifest-plugin')
 
 esbuild.build({
   entryPoints: ['application.js'],
-  entryNames: '[dir]/[name]-[hash].digested',
-  assetNames: '[dir]/[name]-[hash].digested',
+  entryNames: '[dir]/[name]-[hash]',
+  assetNames: '[dir]/[name]-[hash]',
   bundle: true,
   outdir: path.join(__dirname, 'public/assets'),
   plugins: [manifestPlugin()]
@@ -40,10 +40,10 @@ That generates a `manifest.json` in the configured `outdir` which looks like thi
 
 ```json
 {
-  "application.js": "application-HP2LS2UH.digested.js",
-  "application.css": "application-BWAZLURC.digested.css",
-  "images/example.png": "images/example-5N2N2WJM.digested.png",
-  "bootstrap-icons/bootstrap-icons.svg": "_.._/_.._/node_modules/bootstrap-icons/bootstrap-icons-UNS4ZK23.digested.svg"
+  "application.js": "application-HP2LS2UH.js",
+  "application.css": "application-BWAZLURC.css",
+  "images/example.png": "images/example-5N2N2WJM.png",
+  "bootstrap-icons/bootstrap-icons.svg": "_.._/_.._/node_modules/bootstrap-icons/bootstrap-icons-UNS4ZK23.svg"
 }
 ```
 
