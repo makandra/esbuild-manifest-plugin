@@ -36,7 +36,7 @@ function manifestPlugin(options = {}) {
         entryPoints.forEach((entrypoint) => {
           const name = entrypoint.replace(/\.js$/, '')
           const escapedName = name.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')
-          const hashRegex = '[A-Z0-9]{8}' // currently esbuild hashes always look like this
+          const hashRegex = '[A-Z0-9]{8,}'
 
           const jsRegExp = new RegExp(`^${escapedName}(-${hashRegex})?\\.js$`)
           const cssRegExp = new RegExp(`^${escapedName}(-${hashRegex})?\\.css$`)
@@ -71,10 +71,12 @@ function manifestPlugin(options = {}) {
       }
 
       build.onEnd((result) => {
-        const manifest = generateManifest(result.metafile.outputs)
-        const json = serializeManifest(manifest)
+        if (result.metafile) {
+          const manifest = generateManifest(result.metafile.outputs)
+          const json = serializeManifest(manifest)
 
-        fs.writeFileSync(manifestFilePath, json)
+          fs.writeFileSync(manifestFilePath, json)
+        }
       })
     },
   }
