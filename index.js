@@ -71,10 +71,12 @@ function manifestPlugin(options = {}) {
       }
 
       build.onEnd((result) => {
-        const manifest = generateManifest(result.metafile.outputs)
-        const json = serializeManifest(manifest)
+        if (result.metafile) {
+          const manifest = generateManifest(result.metafile.outputs)
+          const json = serializeManifest(manifest)
 
-        fs.writeFileSync(manifestFilePath, json)
+          fs.writeFileSync(manifestFilePath, json)
+        }
       })
     },
   }
