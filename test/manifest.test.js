@@ -124,8 +124,7 @@ describe('manifestPlugin', () => {
       expect(Object.keys(manifest)).toContain('~test-lib/icon.svg')
     })
 
-    // TODO: Adjust this currently erratic bahavior and un-skip the test
-    it.skip('keeps the original path when nodeModulesPrefix is false', async () => {
+    it('keeps the original path when nodeModulesPrefix is false', async () => {
       await buildWithNodeModules({ nodeModulesPrefix: false })
 
       const manifest = readManifest()
