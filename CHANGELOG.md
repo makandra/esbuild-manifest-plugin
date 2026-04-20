@@ -2,6 +2,8 @@
 
 ## Unreleased changes
 
+* Add Jest test suite covering entrypoint, CSS sibling, no-hash, copy-loader and failed-build cases
+
 ## 0.2.0 (2022-09-23)
 
 * Include entrypoints without a `[hash]` in their output name (useful when not using content hashes in development)

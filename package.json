@@ -2,26 +2,36 @@
   "name": "esbuild-manifest-plugin",
   "version": "0.2.0",
   "description": "esbuild plugin to generate manifest of compiled assets",
-  "main": "index.js",
+  "main": "lib/index.js",
   "files": [
-    "index.js"
+    "lib"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/makandra/esbuild-manifest-plugin"
   },
+  "packageManager": "pnpm@10.6.5",
   "author": "Arne Hartherz <arne.hartherz@makandra.de>",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "jest"
   },
   "devDependencies": {
+    "esbuild": "^0.25.0",
     "eslint": "^8.20.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "^15.2.4"
+    "eslint-plugin-n": "^15.2.4",
+    "eslint-plugin-promise": "^6.6.0",
+    "jest": "^30.0.0"
   },
   "peerDependencies": {
     "esbuild": ">= 0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

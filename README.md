@@ -77,6 +77,5 @@ Default: `""`
 
 ## Roadmap
 
-1. Tests
-2. Migrate to TypeScript
-3. More configuration options, if applicable (like `serializeManifest`)
+1. Migrate to TypeScript
+2. More configuration options, if applicable (like `serializeManifest`)
