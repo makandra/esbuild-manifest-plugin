@@ -75,6 +75,42 @@ Examples for an input source `../node_modules/example-lib/image.png`:
 Default: `""`
 
 
+## Development
+
+After checking out the repo, install dependencies with [pnpm](https://pnpm.io/):
+
+```sh
+pnpm install
+```
+
+Lint the codebase with:
+
+```sh
+pnpm run lint
+```
+
+## Running tests
+
+The test suite runs real `esbuild.build` calls against the fixtures under `test/fixtures/` and asserts on the generated `manifest.json`.
+
+Run the full suite:
+
+```sh
+pnpm test
+```
+
+GitHub Actions runs `lint` once and `test` on a Node matrix (18, 20, 22, 24) on every push and pull request to `main`; see `.github/workflows/test.yml`.
+
+## Release process
+
+To release a new version:
+
+1. Update the version in `package.json`.
+2. Move the "Unreleased changes" entries in `CHANGELOG.md` under a new version heading with today's date.
+3. Commit the changes and tag the commit (`git tag vX.Y.Z`).
+4. Push the commit and the tag (`git push && git push --tags`).
+5. Publish to npm with `npm publish` (only the `lib/` directory is shipped; see `files` in `package.json`).
+
 ## Roadmap
 
 1. Migrate to TypeScript

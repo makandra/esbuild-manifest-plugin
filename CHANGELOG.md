@@ -2,7 +2,11 @@
 
 ## Unreleased changes
 
-* Add Jest test suite covering entrypoint, CSS sibling, no-hash, copy-loader and failed-build cases
+*
+
+## 1.0.0 (2026-04-21)
+
+* Add a Jest based test suite
 * Fix `nodeModulesPrefix: false` incorrectly prepending the string `"false"` to asset paths instead of keeping the original path
 
 ## 0.2.0 (2022-09-23)
