@@ -6,6 +6,7 @@ That manifest can be used by applications to resolve output filenames (which may
 
 If you are using the `esbuild-sass-plugin` to have esbuild also compile Sass files, they will be included in the manifest.
 
+This library is written in TypeScript and shipped as both ESM and CommonJS with bundled type definitions.
 
 ## Installation
 
@@ -15,14 +16,32 @@ npm install -D esbuild-manifest-plugin
 
 Or add to your project's `package.json`.
 
-
 ## Usage
 
-Simply `require` and add the plugin to the `plugins` section of the esbuild config.
+Add the plugin to the `plugins` section of the esbuild config.
 
-Example:
+ESM:
 
 ```js
+import path from 'path'
+import esbuild from 'esbuild'
+import manifestPlugin from 'esbuild-manifest-plugin'
+
+await esbuild.build({
+  entryPoints: ['application.js'],
+  entryNames: '[dir]/[name]-[hash]',
+  assetNames: '[dir]/[name]-[hash]',
+  bundle: true,
+  outdir: path.join(__dirname, 'public/assets'),
+  absWorkingDir: path.join(__dirname, 'app/assets'),
+  plugins: [manifestPlugin()],
+})
+```
+
+CommonJS:
+
+```js
+const path = require('path')
 const esbuild = require('esbuild')
 const manifestPlugin = require('esbuild-manifest-plugin')
 
@@ -32,7 +51,8 @@ esbuild.build({
   assetNames: '[dir]/[name]-[hash]',
   bundle: true,
   outdir: path.join(__dirname, 'public/assets'),
-  plugins: [manifestPlugin()]
+  absWorkingDir: path.join(__dirname, 'app/assets'),
+  plugins: [manifestPlugin()],
 })
 ```
 
@@ -47,12 +67,11 @@ That generates a `manifest.json` in the configured `outdir` which looks like thi
 }
 ```
 
-Note that the plugin requires the `metafile` option to be enabled in esbuild for the plugin to work; it will automaticall do that for you.
-
+Note that the plugin requires the `metafile` option to be enabled in esbuild for the plugin to work; it will automatically do that for you.
 
 ## Options
 
-The plugin may be called with the following options.
+The plugin accepts the following `ManifestPluginOptions`:
 
 ### `filename`
 
@@ -83,10 +102,14 @@ After checking out the repo, install dependencies with [pnpm](https://pnpm.io/):
 pnpm install
 ```
 
-Lint the codebase with:
+Common scripts:
 
 ```sh
-pnpm run lint
+pnpm run lint       # Biome lint + format check
+pnpm run format     # Biome auto-format
+pnpm run typecheck  # tsc --noEmit
+pnpm run build      # build.mjs — emits dist/index.{js,cjs,d.ts,d.cts}
+pnpm test           # Vitest
 ```
 
 ## Running tests
@@ -99,7 +122,7 @@ Run the full suite:
 pnpm test
 ```
 
-GitHub Actions runs `lint` once and `test` on a Node matrix (18, 20, 22, 24) on every push and pull request to `main`; see `.github/workflows/test.yml`.
+GitHub Actions runs `lint`, `typecheck`, and `build` once, and `test` on a Node matrix (18, 20, 22, 24) on every push and pull request to `main`; see `.github/workflows/test.yml`.
 
 ## Release process
 
@@ -109,9 +132,4 @@ To release a new version:
 2. Move the "Unreleased changes" entries in `CHANGELOG.md` under a new version heading with today's date.
 3. Commit the changes and tag the commit (`git tag vX.Y.Z`).
 4. Push the commit and the tag (`git push && git push --tags`).
-5. Publish to npm with `npm publish` (only the `lib/` directory is shipped; see `files` in `package.json`).
-
-## Roadmap
-
-1. Migrate to TypeScript
-2. More configuration options, if applicable (like `serializeManifest`)
+5. Publish to npm with `npm publish` (only the `dist/` directory is shipped).

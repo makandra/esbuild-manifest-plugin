@@ -2,10 +2,23 @@
   "name": "esbuild-manifest-plugin",
   "version": "1.0.0",
   "description": "esbuild plugin to generate manifest of compiled assets",
-  "main": "lib/index.js",
-  "files": [
-    "lib"
-  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": ["dist"],
   "repository": {
     "type": "git",
     "url": "https://github.com/makandra/esbuild-manifest-plugin"
@@ -14,24 +27,25 @@
   "author": "Arne Hartherz <arne.hartherz@makandra.de>",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint .",
-    "test": "jest"
+    "build": "node build.mjs",
+    "lint": "biome check",
+    "format": "biome format --write",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^18.19.0",
     "esbuild": "^0.25.0",
-    "eslint": "^8.20.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "^15.2.4",
-    "eslint-plugin-promise": "^6.6.0",
-    "jest": "^30.0.0"
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
   },
   "peerDependencies": {
     "esbuild": ">= 0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
+    "onlyBuiltDependencies": ["esbuild"]
   }
 }

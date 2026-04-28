@@ -17,7 +17,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install
-      - run: pnpm run lint
+      - run: pnpm run typecheck # TypeScript integrity
+      - run: pnpm run lint # code style linting
+      - run: pnpm run build # test if building works fine
 
   test:
     runs-on: ubuntu-24.04
