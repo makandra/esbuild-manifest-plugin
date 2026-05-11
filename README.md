@@ -132,4 +132,5 @@ To release a new version:
 2. Move the "Unreleased changes" entries in `CHANGELOG.md` under a new version heading with today's date.
 3. Commit the changes and tag the commit (`git tag vX.Y.Z`).
 4. Push the commit and the tag (`git push && git push --tags`).
-5. Publish to npm with `npm publish` (only the `dist/` directory is shipped).
+5. Ensure you are logged into npm (`pnpm whoami || pnpm login`)
+6. Publish to npm with `pnpm publish` (only the `dist/` directory is shipped).
