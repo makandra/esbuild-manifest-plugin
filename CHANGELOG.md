@@ -1,11 +1,16 @@
 # esbuild-manifest-plugin Change Log
 
 ## Unreleased changes
+*
 
-* Rewrite the plugin in TypeScript. The package now ships bundled ESM and CommonJS builds with type definitions; `ManifestPluginOptions` is exported for TypeScript consumers. No API changes — both `require('esbuild-manifest-plugin')` and `import manifestPlugin from 'esbuild-manifest-plugin'` return the plugin directly.
-* Replace Jest with Vitest and ESLint with Biome.
-* Support all three esbuild `entryPoints` option shapes: string array, `{ in, out }` object array, and plain object (`{ outputName: 'input.js' }`).
-* Throw an error when required esbuild options `outdir`, `absWorkingDir`, or `entryPoints` are not set, instead of failing with a cryptic runtime error.
+## 2.0.0 (2026-05-11)
+
+* Rewrite the plugin in TypeScript. The package now ships both ESM and CommonJS builds with type declarations; `ManifestPluginOptions` is exported for TypeScript consumers. **The public JavaScript API is unchanged**.
+* Support all three esbuild `entryPoints` shapes:
+  * String array: `['application.js']`
+  * Object array: `[{ in: 'application.js', out: 'application' }]` (new)
+  * Plain object: `{ application: 'application.js' }` (new)
+* Throw an explicit error when required esbuild options `outdir`, `absWorkingDir`, or `entryPoints` are not configured, instead of implicitly failing.
 
 ## 1.0.0 (2026-04-21)
 
