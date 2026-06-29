@@ -29,7 +29,7 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
   return {
     name,
     setup(build) {
-      const { entryPoints, outdir, absWorkingDir } = build.initialOptions
+      const { entryPoints, outdir, absWorkingDir, outExtension } = build.initialOptions
 
       if (outdir === undefined) {
         throw buildError('outdir option is required')
@@ -56,19 +56,24 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
         const manifest: Manifest = {}
         const paths = Object.keys(outputs).map(outputPath => relative(relativeOutDir, outputPath))
 
+        const jsExt = outExtension?.['.js'] ?? '.js'
+        const cssExt = outExtension?.['.css'] ?? '.css'
+        const escapedJsExt = jsExt.replace(/\./g, '\\.')
+        const escapedCssExt = cssExt.replace(/\./g, '\\.')
+
         for (const entrypoint of entryNames) {
           const name = entrypoint.replace(/\.js$/, '')
           const escapedName = name.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')
           const hashRegex = '[A-Z0-9]{8,}'
 
-          const jsRegExp = new RegExp(`^${escapedName}(-${hashRegex})?\\.js$`)
-          const cssRegExp = new RegExp(`^${escapedName}(-${hashRegex})?\\.css$`)
+          const jsRegExp = new RegExp(`^${escapedName}(-${hashRegex})?${escapedJsExt}$`)
+          const cssRegExp = new RegExp(`^${escapedName}(-${hashRegex})?${escapedCssExt}$`)
 
           const jsPath = paths.find(path => jsRegExp.test(path))
           const cssPath = paths.find(path => cssRegExp.test(path))
 
-          manifest[`${name}.js`] = jsPath
-          manifest[`${name}.css`] = cssPath
+          manifest[`${name}${jsExt}`] = jsPath
+          manifest[`${name}${cssExt}`] = cssPath
         }
 
         return manifest

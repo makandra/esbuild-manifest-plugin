@@ -174,6 +174,40 @@ describe('manifestPlugin', () => {
     })
   })
 
+  describe('outExtension option', () => {
+    it('uses the mapped JS extension for manifest key and value', async () => {
+      await esbuild.build({
+        absWorkingDir: join(fixturesDir, 'simple'),
+        entryPoints: ['application.js'],
+        entryNames: '[name]-[hash]',
+        outExtension: { '.js': '.mjs' },
+        bundle: true,
+        outdir,
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.mjs']).toMatch(/^application-[A-Z0-9]{8,}\.mjs$/)
+      expect(manifest).not.toHaveProperty('application.js')
+    })
+
+    it('uses the mapped CSS extension for manifest key and value', async () => {
+      await esbuild.build({
+        absWorkingDir: join(fixturesDir, 'with-css'),
+        entryPoints: ['application.js'],
+        entryNames: '[name]-[hash]',
+        outExtension: { '.js': '.mjs', '.css': '.module.css' },
+        bundle: true,
+        outdir,
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.mjs']).toMatch(/^application-[A-Z0-9]{8,}\.mjs$/)
+      expect(manifest['application.module.css']).toMatch(/^application-[A-Z0-9]{8,}\.module\.css$/)
+    })
+  })
+
   it('throws when outdir is not set', async () => {
     await expect(
       esbuild.build({
