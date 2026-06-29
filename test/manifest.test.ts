@@ -174,6 +174,23 @@ describe('manifestPlugin', () => {
     })
   })
 
+  describe('outbase option', () => {
+    it('strips the outbase prefix from manifest keys', async () => {
+      await esbuild.build({
+        absWorkingDir: fixturesDir,
+        entryPoints: ['simple/application.js'],
+        outbase: join(fixturesDir, 'simple'),
+        entryNames: '[name]-[hash]',
+        bundle: true,
+        outdir,
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.js']).toMatch(/^application-[A-Z0-9]{8,}\.js$/)
+    })
+  })
+
   describe('outExtension option', () => {
     it('uses the mapped JS extension for manifest key and value', async () => {
       await esbuild.build({

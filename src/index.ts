@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join, relative, resolve } from 'node:path'
 import type { BuildOptions, Metafile, Plugin } from 'esbuild'
 
 type Outputs = Metafile['outputs']
@@ -29,7 +29,7 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
   return {
     name,
     setup(build) {
-      const { entryPoints, outdir, absWorkingDir, outExtension } = build.initialOptions
+      const { entryPoints, outdir, absWorkingDir, outExtension, outbase } = build.initialOptions
 
       if (outdir === undefined) {
         throw buildError('outdir option is required')
@@ -38,7 +38,7 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
         throw buildError('absWorkingDir option is required')
       }
 
-      const entryNames = collectEntryNames(entryPoints)
+      const entryNames = collectEntryNames(entryPoints, outbase, absWorkingDir)
 
       const manifestFilePath = join(outdir, filename)
       const relativeOutDir = relative(absWorkingDir, outdir)
@@ -135,13 +135,27 @@ function buildError(message: string): Error {
 //
 // See https://esbuild.github.io/api/#entry-points
 // (and https://github.com/evanw/esbuild/blob/6a794dff68e6a43539f6da671e3080efdf11ca70/lib/shared/common.ts#L362 for the last undocumented variant)
+//
+// When `outbase` is set, esbuild strips the outbase prefix from string entry paths
+// to compute the output name. We mirror that here so the manifest keys match.
 
-function collectEntryNames(entryPoints: BuildOptions['entryPoints']): string[] {
+function collectEntryNames(
+  entryPoints: BuildOptions['entryPoints'],
+  outbase: string | undefined,
+  absWorkingDir: string,
+): string[] {
   if (entryPoints === undefined) {
     throw buildError('entryPoints option is required')
   }
   if (Array.isArray(entryPoints)) {
-    return entryPoints.map(entry => (typeof entry === 'string' ? entry : entry.out))
+    return entryPoints.map(entry => {
+      if (typeof entry !== 'string') return entry.out
+      if (!outbase) return entry
+
+      const absEntry = resolve(absWorkingDir, entry)
+      const absOutbase = resolve(absWorkingDir, outbase)
+      return relative(absOutbase, absEntry)
+    })
   }
   return Object.keys(entryPoints)
 }
