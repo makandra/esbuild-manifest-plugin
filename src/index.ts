@@ -29,7 +29,7 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
   return {
     name,
     setup(build) {
-      const { entryPoints, outdir, absWorkingDir, outExtension, outbase } = build.initialOptions
+      const { entryPoints, outdir, absWorkingDir, outExtension, outbase, entryNames } = build.initialOptions
 
       if (outdir === undefined) {
         throw buildError('outdir option is required')
@@ -38,7 +38,8 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
         throw buildError('absWorkingDir option is required')
       }
 
-      const entryNames = collectEntryNames(entryPoints, outbase, absWorkingDir)
+      const entryOutputNames = collectEntryNames(entryPoints, outbase, absWorkingDir)
+      const dirPrefix = entryNamesDirPrefix(entryNames)
 
       const manifestFilePath = join(outdir, filename)
       const relativeOutDir = relative(absWorkingDir, outdir)
@@ -61,13 +62,13 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
         const escapedJsExt = jsExt.replace(/\./g, '\\.')
         const escapedCssExt = cssExt.replace(/\./g, '\\.')
 
-        for (const entrypoint of entryNames) {
+        for (const entrypoint of entryOutputNames) {
           const name = entrypoint.replace(/\.js$/, '')
           const escapedName = name.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')
           const hashRegex = '[A-Z0-9]{8,}'
 
-          const jsRegExp = new RegExp(`^${escapedName}(-${hashRegex})?${escapedJsExt}$`)
-          const cssRegExp = new RegExp(`^${escapedName}(-${hashRegex})?${escapedCssExt}$`)
+          const jsRegExp = new RegExp(`^${dirPrefix}${escapedName}(-${hashRegex})?${escapedJsExt}$`)
+          const cssRegExp = new RegExp(`^${dirPrefix}${escapedName}(-${hashRegex})?${escapedCssExt}$`)
 
           const jsPath = paths.find(path => jsRegExp.test(path))
           const cssPath = paths.find(path => cssRegExp.test(path))
@@ -138,6 +139,25 @@ function buildError(message: string): Error {
 //
 // When `outbase` is set, esbuild strips the outbase prefix from string entry paths
 // to compute the output name. We mirror that here so the manifest keys match.
+
+// Extracts the static directory prefix from an entryNames pattern.
+// For example, 'assets/[name]-[hash]' → 'assets/', 'assets/[dir]/[name]-[hash]' → 'assets/'.
+// [dir] is implicitly handled: the entry path relative to outbase already contains the
+// directory, which ends up in `name` and therefore in the regex.
+function entryNamesDirPrefix(entryNames: string | undefined): string {
+  if (!entryNames) return ''
+
+  const nameTokenIndex = entryNames.indexOf('[name]')
+  if (nameTokenIndex === -1) return ''
+
+  const beforeName = entryNames.slice(0, nameTokenIndex)
+  const lastSlash = beforeName.lastIndexOf('/')
+  if (lastSlash === -1) return ''
+
+  const dirPart = beforeName.slice(0, lastSlash + 1)
+  const firstToken = dirPart.indexOf('[')
+  return firstToken === -1 ? dirPart : dirPart.slice(0, firstToken)
+}
 
 function collectEntryNames(
   entryPoints: BuildOptions['entryPoints'],

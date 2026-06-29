@@ -174,6 +174,37 @@ describe('manifestPlugin', () => {
     })
   })
 
+  describe('entryNames option', () => {
+    it('handles a static directory prefix in entryNames', async () => {
+      await esbuild.build({
+        absWorkingDir: join(fixturesDir, 'simple'),
+        entryPoints: ['application.js'],
+        entryNames: 'assets/[name]-[hash]',
+        bundle: true,
+        outdir,
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.js']).toMatch(/^assets\/application-[A-Z0-9]{8,}\.js$/)
+    })
+
+    it('handles [dir] token in entryNames', async () => {
+      await esbuild.build({
+        absWorkingDir: fixturesDir,
+        entryPoints: ['simple/application.js'],
+        outbase: fixturesDir,
+        entryNames: '[dir]/[name]-[hash]',
+        bundle: true,
+        outdir,
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['simple/application.js']).toMatch(/^simple\/application-[A-Z0-9]{8,}\.js$/)
+    })
+  })
+
   describe('outbase option', () => {
     it('strips the outbase prefix from manifest keys', async () => {
       await esbuild.build({
