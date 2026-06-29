@@ -256,17 +256,31 @@ describe('manifestPlugin', () => {
     })
   })
 
-  it('throws when outdir is not set', async () => {
+  describe('outfile option', () => {
+    it('supports outfile as an alternative to outdir', async () => {
+      await esbuild.build({
+        absWorkingDir: join(fixturesDir, 'simple'),
+        entryPoints: ['application.js'],
+        bundle: true,
+        outfile: join(outdir, 'out.js'),
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.js']).toBe('out.js')
+    })
+  })
+
+  it('throws when neither outdir nor outfile is set', async () => {
     await expect(
       esbuild.build({
         absWorkingDir: join(fixturesDir, 'simple'),
         entryPoints: ['application.js'],
         bundle: true,
-        outfile: join(outdir, 'out.js'),
         logLevel: 'silent',
         plugins: [manifestPlugin()],
       }),
-    ).rejects.toThrow('manifestPlugin: outdir option is required')
+    ).rejects.toThrow('manifestPlugin: outdir or outfile option is required')
   })
 
   it('throws when absWorkingDir is not set', async () => {

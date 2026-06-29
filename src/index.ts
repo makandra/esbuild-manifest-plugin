@@ -1,5 +1,5 @@
 import { writeFileSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { basename, dirname, extname, join, relative, resolve } from 'node:path'
 import type { BuildOptions, Metafile, Plugin } from 'esbuild'
 
 type Outputs = Metafile['outputs']
@@ -29,20 +29,22 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
   return {
     name,
     setup(build) {
-      const { entryPoints, outdir, absWorkingDir, outExtension, outbase, entryNames } = build.initialOptions
+      const { entryPoints, outdir, outfile, absWorkingDir, outExtension, outbase, entryNames } = build.initialOptions
 
-      if (outdir === undefined) {
-        throw buildError('outdir option is required')
+      if (outdir === undefined && outfile === undefined) {
+        throw buildError('outdir or outfile option is required')
       }
       if (absWorkingDir === undefined) {
         throw buildError('absWorkingDir option is required')
       }
 
+      const effectiveOutdir = outdir ?? resolve(absWorkingDir, dirname(outfile!))
+
       const entryOutputNames = collectEntryNames(entryPoints, outbase, absWorkingDir)
       const dirPrefix = entryNamesDirPrefix(entryNames)
 
-      const manifestFilePath = join(outdir, filename)
-      const relativeOutDir = relative(absWorkingDir, outdir)
+      const manifestFilePath = join(effectiveOutdir, filename)
+      const relativeOutDir = relative(absWorkingDir, effectiveOutdir)
 
       build.initialOptions.metafile = true
 
@@ -64,14 +66,23 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
 
         for (const entrypoint of entryOutputNames) {
           const name = entrypoint.replace(/\.js$/, '')
-          const escapedName = name.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')
-          const hashRegex = '[A-Z0-9]{8,}'
 
-          const jsRegExp = new RegExp(`^${dirPrefix}${escapedName}(-${hashRegex})?${escapedJsExt}$`)
-          const cssRegExp = new RegExp(`^${dirPrefix}${escapedName}(-${hashRegex})?${escapedCssExt}$`)
+          let jsPath: string | undefined
+          let cssPath: string | undefined
 
-          const jsPath = paths.find(path => jsRegExp.test(path))
-          const cssPath = paths.find(path => cssRegExp.test(path))
+          if (outfile) {
+            // With outfile the output filename is fixed — no need for regex matching.
+            const stem = basename(outfile, extname(outfile))
+            jsPath = paths.find(p => p === `${stem}${jsExt}`)
+            cssPath = paths.find(p => p === `${stem}${cssExt}`)
+          } else {
+            const escapedName = name.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')
+            const hashRegex = '[A-Z0-9]{8,}'
+            const jsRegExp = new RegExp(`^${dirPrefix}${escapedName}(-${hashRegex})?${escapedJsExt}$`)
+            const cssRegExp = new RegExp(`^${dirPrefix}${escapedName}(-${hashRegex})?${escapedCssExt}$`)
+            jsPath = paths.find(path => jsRegExp.test(path))
+            cssPath = paths.find(path => cssRegExp.test(path))
+          }
 
           manifest[`${name}${jsExt}`] = jsPath
           manifest[`${name}${cssExt}`] = cssPath
