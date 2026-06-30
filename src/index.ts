@@ -29,7 +29,8 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
   return {
     name,
     setup(build) {
-      const { entryPoints, outdir, outfile, absWorkingDir, outExtension, outbase, entryNames } = build.initialOptions
+      const { entryPoints, outdir, outfile, absWorkingDir, outExtension, outbase, entryNames } =
+        build.initialOptions
 
       if (outdir === undefined && outfile === undefined) {
         throw buildError('outdir or outfile option is required')
@@ -38,7 +39,8 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
         throw buildError('absWorkingDir option is required')
       }
 
-      const effectiveOutdir = outdir ?? resolve(absWorkingDir, dirname(outfile!))
+      const effectiveOutdir =
+        outdir !== undefined ? outdir : resolve(absWorkingDir, dirname(outfile as string))
 
       const entryOutputNames = collectEntryNames(entryPoints, outbase, absWorkingDir)
       const dirPrefix = entryNamesDirPrefix(entryNames)
@@ -78,8 +80,12 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
           } else {
             const escapedName = name.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&')
             const hashRegex = '[A-Z0-9]{8,}'
-            const jsRegExp = new RegExp(`^${dirPrefix}${escapedName}(-${hashRegex})?${escapedJsExt}$`)
-            const cssRegExp = new RegExp(`^${dirPrefix}${escapedName}(-${hashRegex})?${escapedCssExt}$`)
+            const jsRegExp = new RegExp(
+              `^${dirPrefix}${escapedName}(-${hashRegex})?${escapedJsExt}$`,
+            )
+            const cssRegExp = new RegExp(
+              `^${dirPrefix}${escapedName}(-${hashRegex})?${escapedCssExt}$`,
+            )
             jsPath = paths.find(path => jsRegExp.test(path))
             cssPath = paths.find(path => cssRegExp.test(path))
           }
