@@ -56,7 +56,7 @@ esbuild.build({
 })
 ```
 
-That generates a `manifest.json` in the configured `outdir` which looks like this:
+That generates a `manifest.json` next to the output files which looks like this:
 
 ```json
 {
