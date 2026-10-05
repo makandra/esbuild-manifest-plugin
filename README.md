@@ -67,6 +67,8 @@ That generates a `manifest.json` next to the output files which looks like this:
 }
 ```
 
+Each entrypoint is mapped to its JS and CSS output, keyed by the entrypoint path with the respective output extension (so `application.ts` becomes `application.js`). JS-like entrypoints (`.js`, `.ts`, `.jsx`, `.tsx`, `.mjs`, `.cjs`, …) and CSS entrypoints are supported. Other entrypoints (e.g. `logo.svg`) are not supported: depending on the loader they are missing from the manifest or show up with unexpected entries. Import such files from your JS or CSS instead, so that they are listed as assets.
+
 Note that the plugin requires the `metafile` option to be enabled in esbuild for the plugin to work; it will automatically do that for you.
 
 ## Options

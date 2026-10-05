@@ -1,7 +1,10 @@
 # esbuild-manifest-plugin Change Log
 
 ## Unreleased changes
-*
+* Support the esbuild [`outExtension`](https://esbuild.github.io/api/#out-extension) option: manifest keys and values use the configured JS/CSS extensions (e.g. `application.mjs`).
+* Support the esbuild [`outbase`](https://esbuild.github.io/api/#outbase) option: manifest keys are entry paths relative to `outbase`. Without an explicit `outbase`, the lowest common ancestor directory of all entry points is used, like esbuild does.
+* Support the esbuild [`entryNames`](https://esbuild.github.io/api/#entry-names) option with all its placeholders (`[dir]`, `[name]`, `[hash]`, `[ext]`), e.g. `assets/[dir]/[name]-[hash]`.
+* Support the esbuild [`outfile`](https://esbuild.github.io/api/#outfile) option as an alternative to `outdir`. The manifest is written next to the output file.
 
 ## 2.0.0 (2026-05-11)
 

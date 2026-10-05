@@ -66,6 +66,38 @@ describe('manifestPlugin', () => {
     expect(manifest['application.js']).toBe('application.js')
   })
 
+  it.each(['ts', 'tsx', 'jsx', 'mjs', 'cjs', 'mts', 'cts'])(
+    'maps a .%s entrypoint to the .js output key',
+    async ext => {
+      await esbuild.build({
+        absWorkingDir: join(fixturesDir, 'entry-extensions'),
+        entryPoints: [`application.${ext}`],
+        entryNames: '[name]-[hash]',
+        bundle: true,
+        outdir,
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.js']).toMatch(/^application-[A-Z0-9]{8,}\.js$/)
+    },
+  )
+
+  it('maps a CSS entrypoint to the .css output key only', async () => {
+    await esbuild.build({
+      absWorkingDir: join(fixturesDir, 'with-css'),
+      entryPoints: ['application.css'],
+      entryNames: '[name]-[hash]',
+      bundle: true,
+      outdir,
+      plugins: [manifestPlugin()],
+    })
+
+    const manifest = readManifest()
+    expect(manifest['application.css']).toMatch(/^application-[A-Z0-9]{8,}\.css$/)
+    expect(manifest).not.toHaveProperty(['application.js'])
+  })
+
   it('maps copied assets to their fingerprinted output', async () => {
     await esbuild.build({
       absWorkingDir: join(fixturesDir, 'with-copy'),
@@ -203,6 +235,37 @@ describe('manifestPlugin', () => {
       const manifest = readManifest()
       expect(manifest['simple/application.js']).toMatch(/^simple\/application-[A-Z0-9]{8,}\.js$/)
     })
+
+    it('resolves [ext] to the effective JS/CSS out extension', async () => {
+      await esbuild.build({
+        absWorkingDir: join(fixturesDir, 'with-css'),
+        entryPoints: ['application.js'],
+        entryNames: 'entries/[ext]/[name]',
+        bundle: true,
+        outdir,
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.js']).toBe('entries/js/application.js')
+      expect(manifest['application.css']).toBe('entries/css/application.css')
+    })
+
+    it('defaults outbase like esbuild does when [dir] is used without an explicit outbase', async () => {
+      // esbuild computes a default outbase (lowest common ancestor of entry points) when none
+      // is given. Here that's the entry's own directory, so [dir] resolves to "".
+      await esbuild.build({
+        absWorkingDir: fixturesDir,
+        entryPoints: ['simple/application.js'],
+        entryNames: '[dir]/[name]-[hash]',
+        bundle: true,
+        outdir,
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.js']).toMatch(/^application-[A-Z0-9]{8,}\.js$/)
+    })
   })
 
   describe('outbase option', () => {
@@ -219,6 +282,122 @@ describe('manifestPlugin', () => {
 
       const manifest = readManifest()
       expect(manifest['application.js']).toMatch(/^application-[A-Z0-9]{8,}\.js$/)
+    })
+
+    describe('with entry points in subdirectories', () => {
+      function buildNested(options: esbuild.BuildOptions) {
+        return esbuild.build({
+          absWorkingDir: join(fixturesDir, 'nested'),
+          entryNames: '[dir]/[name]-[hash]',
+          bundle: true,
+          outdir,
+          plugins: [manifestPlugin()],
+          ...options,
+        })
+      }
+
+      describe('without explicit outbase (defaults to the lowest common ancestor directory)', () => {
+        it('handles a single entry point in a directory', async () => {
+          await buildNested({ entryPoints: ['path/application.js'] })
+
+          const manifest = readManifest()
+          expect(manifest['application.js']).toMatch(/^application-[A-Z0-9]{8,}\.js$/)
+        })
+
+        it('handles multiple entry points in the same directory', async () => {
+          await buildNested({ entryPoints: ['shared/application.js', 'shared/other.js'] })
+
+          const manifest = readManifest()
+          expect(manifest['application.js']).toMatch(/^application-[A-Z0-9]{8,}\.js$/)
+          expect(manifest['other.js']).toMatch(/^other-[A-Z0-9]{8,}\.js$/)
+        })
+
+        it('handles multiple entry points in different directories', async () => {
+          await buildNested({ entryPoints: ['shared/a/application.js', 'shared/b/other.js'] })
+
+          const manifest = readManifest()
+          expect(manifest['a/application.js']).toMatch(/^a\/application-[A-Z0-9]{8,}\.js$/)
+          expect(manifest['b/other.js']).toMatch(/^b\/other-[A-Z0-9]{8,}\.js$/)
+        })
+
+        it('handles multiple entry points in different directories when entryNames has no [dir] token', async () => {
+          await buildNested({
+            entryPoints: ['shared/a/application.js', 'shared/b/other.js'],
+            entryNames: '[name]-[hash]',
+          })
+
+          const manifest = readManifest()
+          expect(manifest['a/application.js']).toMatch(/^application-[A-Z0-9]{8,}\.js$/)
+          expect(manifest['b/other.js']).toMatch(/^other-[A-Z0-9]{8,}\.js$/)
+        })
+
+        it('ignores entry points with an explicit out path when computing the common ancestor', async () => {
+          await buildNested({
+            entryPoints: [{ in: 'shared/a/application.js', out: 'bundle' }, 'shared/b/other.js'],
+          })
+
+          const manifest = readManifest()
+          expect(manifest['bundle.js']).toMatch(/^bundle-[A-Z0-9]{8,}\.js$/)
+          expect(manifest['other.js']).toMatch(/^other-[A-Z0-9]{8,}\.js$/)
+        })
+      })
+
+      describe('with explicit outbase', () => {
+        it('handles a single entry point in a directory', async () => {
+          await buildNested({ entryPoints: ['path/application.js'], outbase: '.' })
+
+          const manifest = readManifest()
+          expect(manifest['path/application.js']).toMatch(/^path\/application-[A-Z0-9]{8,}\.js$/)
+        })
+
+        it('handles multiple entry points in the same directory', async () => {
+          await buildNested({
+            entryPoints: ['shared/application.js', 'shared/other.js'],
+            outbase: '.',
+          })
+
+          const manifest = readManifest()
+          expect(manifest['shared/application.js']).toMatch(
+            /^shared\/application-[A-Z0-9]{8,}\.js$/,
+          )
+          expect(manifest['shared/other.js']).toMatch(/^shared\/other-[A-Z0-9]{8,}\.js$/)
+        })
+
+        it('handles multiple entry points in different directories', async () => {
+          await buildNested({
+            entryPoints: ['shared/a/application.js', 'shared/b/other.js'],
+            outbase: '.',
+          })
+
+          const manifest = readManifest()
+          expect(manifest['shared/a/application.js']).toMatch(
+            /^shared\/a\/application-[A-Z0-9]{8,}\.js$/,
+          )
+          expect(manifest['shared/b/other.js']).toMatch(/^shared\/b\/other-[A-Z0-9]{8,}\.js$/)
+        })
+
+        it('handles an outbase between the working directory and the entry points', async () => {
+          await buildNested({
+            entryPoints: ['shared/a/application.js', 'shared/b/other.js'],
+            outbase: 'shared',
+          })
+
+          const manifest = readManifest()
+          expect(manifest['a/application.js']).toMatch(/^a\/application-[A-Z0-9]{8,}\.js$/)
+          expect(manifest['b/other.js']).toMatch(/^b\/other-[A-Z0-9]{8,}\.js$/)
+        })
+
+        it('handles an absolute outbase', async () => {
+          await buildNested({
+            entryPoints: ['shared/a/application.js', 'shared/b/other.js'],
+            outbase: join(fixturesDir, 'nested', 'shared'),
+          })
+
+          const manifest = readManifest()
+          expect(manifest['a/application.js']).toMatch(/^a\/application-[A-Z0-9]{8,}\.js$/)
+          expect(manifest['b/other.js']).toMatch(/^b\/other-[A-Z0-9]{8,}\.js$/)
+        })
+      })
     })
   })
 
