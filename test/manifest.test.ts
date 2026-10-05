@@ -397,6 +397,19 @@ describe('manifestPlugin', () => {
           expect(manifest['a/application.js']).toMatch(/^a\/application-[A-Z0-9]{8,}\.js$/)
           expect(manifest['b/other.js']).toMatch(/^b\/other-[A-Z0-9]{8,}\.js$/)
         })
+
+        it('handles entry points outside of outbase', async () => {
+          await buildNested({
+            entryPoints: ['shared/a/application.js', 'path/application.js'],
+            outbase: 'shared',
+          })
+
+          const manifest = readManifest()
+          expect(manifest['a/application.js']).toMatch(/^a\/application-[A-Z0-9]{8,}\.js$/)
+          expect(manifest['_.._/path/application.js']).toMatch(
+            /^_\.\._\/path\/application-[A-Z0-9]{8,}\.js$/,
+          )
+        })
       })
     })
   })
@@ -447,6 +460,35 @@ describe('manifestPlugin', () => {
 
       const manifest = readManifest()
       expect(manifest['application.js']).toBe('out.js')
+    })
+
+    it('keeps the extension of the outfile', async () => {
+      await esbuild.build({
+        absWorkingDir: join(fixturesDir, 'with-css'),
+        entryPoints: ['application.js'],
+        bundle: true,
+        outfile: join(outdir, 'out.min.mjs'),
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.js']).toBe('out.min.mjs')
+      expect(manifest['application.css']).toBe('out.min.css')
+    })
+
+    it('ignores the JS outExtension but applies the CSS outExtension', async () => {
+      await esbuild.build({
+        absWorkingDir: join(fixturesDir, 'with-css'),
+        entryPoints: ['application.js'],
+        outExtension: { '.js': '.mjs', '.css': '.module.css' },
+        bundle: true,
+        outfile: join(outdir, 'out.js'),
+        plugins: [manifestPlugin()],
+      })
+
+      const manifest = readManifest()
+      expect(manifest['application.mjs']).toBe('out.js')
+      expect(manifest['application.module.css']).toBe('out.module.css')
     })
   })
 

@@ -43,7 +43,8 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
         outdir !== undefined ? outdir : resolve(absWorkingDir, dirname(outfile as string))
 
       const entryOutputNames = collectEntryNames(entryPoints, outbase, absWorkingDir)
-      const outputExtensions = ['.js', '.css'].map(ext => outExtension?.[ext] ?? ext)
+      const jsExt = outExtension?.['.js'] ?? '.js'
+      const cssExt = outExtension?.['.css'] ?? '.css'
 
       const manifestFilePath = join(effectiveOutdir, filename)
       const relativeOutDir = relative(absWorkingDir, effectiveOutdir)
@@ -59,10 +60,11 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
 
       function outputPathRegExp(entry: EntryName, ext: string): RegExp {
         if (outfile) {
-          // With outfile the output filename is fixed, regardless of entryNames.
-          return new RegExp(
-            `^${escapeRegExp(basename(outfile, extname(outfile)))}${escapeRegExp(ext)}$`,
-          )
+          // With outfile, esbuild ignores entryNames and the JS outExtension: the JS output is
+          // the outfile itself, a CSS sibling replaces the outfile's extension.
+          const file =
+            ext === jsExt ? basename(outfile) : `${basename(outfile, extname(outfile))}${ext}`
+          return new RegExp(`^${escapeRegExp(file)}$`)
         }
         return entryOutputRegExp(entryNames, entry, ext)
       }
@@ -76,7 +78,7 @@ export default function manifestPlugin(options: ManifestPluginOptions = {}): Plu
 
           // A JS entry point may produce a sibling CSS file (and a CSS entry point no JS file).
           // Missing outputs end up as `undefined` and are dropped when serializing the manifest.
-          for (const ext of outputExtensions) {
+          for (const ext of [jsExt, cssExt]) {
             const regExp = outputPathRegExp(entry, ext)
             manifest[`${key}${ext}`] = paths.find(path => regExp.test(path))
           }
@@ -178,7 +180,11 @@ function collectEntryNames(
 
     const relativeEntry = relative(absOutbase, resolve(absWorkingDir, entry))
     return {
-      dir: toPosixPath(dirname(relativeEntry)),
+      // esbuild writes entries outside of outbase into `_.._` directories instead of `..`.
+      dir: toPosixPath(dirname(relativeEntry))
+        .split('/')
+        .map(segment => (segment === '..' ? '_.._' : segment))
+        .join('/'),
       name: basename(relativeEntry, extname(relativeEntry)),
     }
   })
